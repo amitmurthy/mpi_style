@@ -1,11 +1,14 @@
 addprocs(4)
-push!(LOAD_PATH, "/Users/amitm/Julia/mpi_style")
+push!(LOAD_PATH, ".")
+using MPIStyle
 @everywhere importall MPIStyle
 init_comm_channels()
 
 @everywhere begin
     if myid() == 1
-        sendto(2, "Hello World!")
+        data = "Hello from 1"
+        println("Sending from 1 '$data'")
+        sendto(2, data)
     elseif myid() == 2
         println(recvfrom_(1))
     end
@@ -13,7 +16,7 @@ init_comm_channels()
     println("Sleeping for $stime seconds")
     sleep(stime)
     barrier()
-    println("Out of barrier")
+    println("Exiting barrier")
 
     bcast_val = nothing
     if myid() == 1
@@ -23,6 +26,8 @@ init_comm_channels()
     bcast_val = bcast(bcast_val, 1)
     println("recd broadcasted val $bcast_val")
 
+    barrier()
+
     scatter_data = nothing
     if myid() == 1
         scatter_data = rand(Int8, nprocs())
@@ -30,6 +35,8 @@ init_comm_channels()
     end
     lp = scatter(scatter_data, 1)
     println("localpart $lp")
+
+    barrier()
 
     scatter_data = nothing
     if myid() == 1
@@ -39,12 +46,14 @@ init_comm_channels()
     lp = scatter(scatter_data, 1)
     println("localpart $lp")
 
+    barrier()
+
     gathered_data = gather(myid(), 1)
     if myid() == 1
         println("gather $gathered_data")
     end
 
-    sleep(1.0) # Need to implement peek and ordering of messages. Till then....
+    barrier()
 
     gathered_data = gather([myid(), myid()], 1)
     if myid() == 1
