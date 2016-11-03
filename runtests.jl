@@ -33,29 +33,23 @@ init_comm_channels()
         scatter_data = rand(Int8, nprocs())
         println("scattering $scatter_data")
     end
-    lp = scatter(scatter_data, 1)
+    lp = scatter(scatter_data, 1, tag=1)
     println("localpart $lp")
-
-    barrier()
 
     scatter_data = nothing
     if myid() == 1
         scatter_data = rand(Int8, nprocs()*2)
         println("scattering $scatter_data")
     end
-    lp = scatter(scatter_data, 1)
+    lp = scatter(scatter_data, 1, tag=2)
     println("localpart $lp")
 
-    barrier()
-
-    gathered_data = gather(myid(), 1)
+    gathered_data = gather(myid(), 1, tag=3)
     if myid() == 1
         println("gather $gathered_data")
     end
 
-    barrier()
-
-    gathered_data = gather([myid(), myid()], 1)
+    gathered_data = gather([myid(), myid()], 1, tag=4)
     if myid() == 1
         println("gather $gathered_data")
     end
